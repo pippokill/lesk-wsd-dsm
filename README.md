@@ -51,6 +51,7 @@ The script requires the following parameters:
 
 **EXAMPLE**
 >This example performs Word Sense Disambiguation of the English dataset provided by the SemEval-2013 Task 12 organizers.
+>./run.sh -i /home/user/semeval-2013-task12-test-data/data/multilingual-all-words.en.xml -o /home/user/semeval-2013-task12-test-data/out/lesk_wsd_dsm_test -cm doc -f xml -dsm ./resources/dsm/termvectors_en.bin -lang en -sc ./resources/sense/sense.freq -sf bn -c max -of task -depth 1
 
 **RESOURCES**
 Several resources are used by the algorithm:
