@@ -27,7 +27,7 @@ The script requires the following parameters:
 
 -o *output_file*: the file in which you want to save the output
 
--cm *sent|doc|text*: indicates how the input text will be read and disambiguated. The available values are: "sent" one sentence per time, "doc" one doc per time, "text" read the full file
+-cm *sent|text|doc*: indicates how the input text will be read and disambiguated. The available values are: "sent" one sentence per time, "text" one text element per time, "doc" read the full file
 
 -f *xml|oldxml|plain*: indicates the input file format. The available values are: "xml" for the SemEval-2013 Task 12 file format (http://www.cs.york.ac.uk/semeval-2013/task12/), "oldxml" old SemEval XML format, "plain" for plain text. The plain text must contain one token for each line. Each line must contains three values separated by TAB: token, pos-tag, lemma. The pos-tag has four possible values: n (noun), v (verb), j (adjective), r (adverb), any other character for other tags. An example is reported in the *text* folder
 
