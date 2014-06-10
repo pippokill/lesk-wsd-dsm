@@ -52,13 +52,16 @@ import org.apache.lucene.store.IndexOutput;
  */
 public class Text2Bin {
 
-    /**
+    /** 
+     * Convert a WordSpace text matrix to a bin WordSpace file
+     * Text matrix format:
+     * - the first line contains the matrix dimensions N
+     * - each line contains the word vector information: word d1 d2 ... dN
+     * Text2Bin text_matrix_file bin_matrix_file
      * @param args the command line arguments
      */
     public static void main(String[] args) {
         try {
-            args=new String[] {"/media/pierpaolo/storage/data/wiki/it/termsvector.text",
-                "/media/pierpaolo/storage/data/wiki/it/termsvector.29.bin"};
             BufferedReader in = new BufferedReader(new FileReader(args[0]));
             File file = new File(args[1]);
             FSDirectory fs = FSDirectory.open(file.getParentFile());
