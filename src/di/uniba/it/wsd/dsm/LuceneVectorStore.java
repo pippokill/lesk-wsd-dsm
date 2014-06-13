@@ -54,26 +54,17 @@ import org.apache.lucene.store.IndexInput;
  *
  * @author pierpaolo
  */
-public class VectorSpace {
+public class LuceneVectorStore implements VectorStore {
 
-    private final File file;
     private IndexInput indexInput;
     private final Map<String, float[]> memory = new HashMap<>();
-    private boolean newHeader = false;
 
     /**
      *
      * @param file
-     */
-    public VectorSpace(File file) {
-        this.file = file;
-    }
-
-    /**
-     *
      * @throws IOException
      */
-    public void init() throws IOException {
+    public void init(File file) throws IOException {
         FSDirectory dir = FSDirectory.open(file.getParentFile());
         this.indexInput = dir.openInput(file.getName());
         String header = indexInput.readString(); //skip header
@@ -82,16 +73,15 @@ public class VectorSpace {
         } else if (header.contains("-dimension")) {
             int index = header.indexOf("-dimension");
             ObjectVector.vecLength = Integer.parseInt(header.substring(index + 10).trim());
-            newHeader = true;
         }
-
+        loadInRam();
     }
 
     /**
      *
      * @throws IOException
      */
-    public void loadInRam() throws IOException {
+    private void loadInRam() throws IOException {
         this.indexInput.seek(0);
         memory.clear();
         String header = indexInput.readString(); //skip header
@@ -100,7 +90,6 @@ public class VectorSpace {
         } else if (header.contains("-dimension")) {
             int index = header.indexOf("-dimension");
             ObjectVector.vecLength = Integer.parseInt(header.substring(index + 10).trim());
-            newHeader = true;
         }
         while (indexInput.getFilePointer() < indexInput.length()) {
             String term = indexInput.readString();
@@ -110,7 +99,7 @@ public class VectorSpace {
             }
             memory.put(term, v);
         }
-        Logger.getLogger(VectorSpace.class.getName()).log(Level.INFO, "Loaded {0} vectors", memory.size());
+        Logger.getLogger(LuceneVectorStore.class.getName()).log(Level.INFO, "Loaded {0} vectors", memory.size());
     }
 
     /**
@@ -120,7 +109,7 @@ public class VectorSpace {
      * @throws IOException
      */
     public Map<String, float[]> prefetch(Set<String> set) throws IOException {
-        Logger.getLogger(VectorSpace.class.getName()).log(Level.INFO, "Prefetching for {0} vectors", set.size());
+        Logger.getLogger(LuceneVectorStore.class.getName()).log(Level.INFO, "Prefetching for {0} vectors", set.size());
         this.indexInput.seek(0);
         Map<String, float[]> map = new HashMap<>();
         String header = indexInput.readString(); //skip header
@@ -129,7 +118,6 @@ public class VectorSpace {
         } else if (header.contains("-dimension")) {
             int index = header.indexOf("-dimension");
             ObjectVector.vecLength = Integer.parseInt(header.substring(index + 10).trim());
-            newHeader = true;
         }
         while (indexInput.getFilePointer() < indexInput.length()) {
             String term = indexInput.readString();
@@ -143,7 +131,7 @@ public class VectorSpace {
                 this.indexInput.seek(indexInput.getFilePointer() + ObjectVector.vecLength * 4);
             }
         }
-        Logger.getLogger(VectorSpace.class.getName()).log(Level.INFO, "Prefetched {0} vectors", map.size());
+        Logger.getLogger(LuceneVectorStore.class.getName()).log(Level.INFO, "Prefetched {0} vectors", map.size());
         return map;
     }
 
@@ -161,7 +149,6 @@ public class VectorSpace {
         } else if (header.contains("-dimension")) {
             int index = header.indexOf("-dimension");
             ObjectVector.vecLength = Integer.parseInt(header.substring(index + 10).trim());
-            newHeader = true;
         }
         while (indexInput.getFilePointer() < indexInput.length()) {
             String key = indexInput.readString();
@@ -194,7 +181,6 @@ public class VectorSpace {
         } else if (header.contains("-dimension")) {
             int index = header.indexOf("-dimension");
             ObjectVector.vecLength = Integer.parseInt(header.substring(index + 10).trim());
-            newHeader = true;
         }
         while (indexInput.getFilePointer() < indexInput.length()) {
             String key = indexInput.readString();
@@ -222,6 +208,7 @@ public class VectorSpace {
      * @param term
      * @return
      */
+    @Override
     public float[] getVector(String term) {
         return memory.get(term);
     }
@@ -232,10 +219,11 @@ public class VectorSpace {
      * @param n
      * @return
      */
+    @Override
     public List<SpaceResult> findSimilar(String word, int n) {
         float[] v1 = memory.get(word);
         if (v1 == null) {
-            Logger.getLogger(VectorSpace.class.getName()).log(Level.WARNING, "No vector for term: {0}", word);
+            Logger.getLogger(LuceneVectorStore.class.getName()).log(Level.WARNING, "No vector for term: {0}", word);
             return new ArrayList<>();
         }
         PriorityQueue<SpaceResult> queue = new PriorityQueue<>();
@@ -293,7 +281,7 @@ public class VectorSpace {
     public List<SpaceResult> findSimilar(Map<String, float[]> map, String word, int n) {
         float[] v1 = map.get(word);
         if (v1 == null) {
-            Logger.getLogger(VectorSpace.class.getName()).log(Level.WARNING, "No vector for term: {0}", word);
+            Logger.getLogger(LuceneVectorStore.class.getName()).log(Level.WARNING, "No vector for term: {0}", word);
             return new ArrayList<>();
         }
         PriorityQueue<SpaceResult> queue = new PriorityQueue<>();

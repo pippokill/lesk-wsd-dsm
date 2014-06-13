@@ -36,13 +36,15 @@ package di.uniba.it.exec;
 
 import di.uniba.it.wsd.OldXMLTextReader;
 import di.uniba.it.wsd.PlainTextReader;
-import di.uniba.it.wsd.data.TextReader;
-import di.uniba.it.wsd.Utils;
 import di.uniba.it.wsd.RevisedLesk;
+import di.uniba.it.wsd.Utils;
 import di.uniba.it.wsd.XMLTextReader;
 import di.uniba.it.wsd.data.SynsetOut;
+import di.uniba.it.wsd.data.TextReader;
 import di.uniba.it.wsd.data.Token;
-import di.uniba.it.wsd.dsm.VectorSpace;
+import di.uniba.it.wsd.dsm.DataVectorStore;
+import di.uniba.it.wsd.dsm.LuceneVectorStore;
+import di.uniba.it.wsd.dsm.VectorStore;
 import di.uniba.it.wsd.tool.SenseFreqAPI;
 import it.uniroma1.lcl.jlt.util.Language;
 import java.io.BufferedWriter;
@@ -176,9 +178,14 @@ public class RunWSD {
                 wsd = new RevisedLesk(language);
                 wsd.setStemming(true);
             } else {
-                VectorSpace dsm = new VectorSpace(new File(dsmFilename));
-                dsm.init();
-                dsm.loadInRam();
+                String dsmType = props.getProperty("-dsmType");
+                VectorStore dsm = null;
+                if (dsmType != null && dsmType.equals("java")) {
+                    dsm = new DataVectorStore();
+                } else {
+                    dsm = new LuceneVectorStore();
+                }
+                dsm.init(new File(dsmFilename));
                 wsd = new RevisedLesk(language, dsm);
                 wsd.setStemming(false);
             }

@@ -34,13 +34,13 @@
  */
 package di.uniba.it.wsd;
 
-import di.uniba.it.wsd.data.RelatedSynset;
 import di.uniba.it.wsd.data.ExecuteStatistics;
 import di.uniba.it.wsd.data.POSenum;
+import di.uniba.it.wsd.data.RelatedSynset;
 import di.uniba.it.wsd.data.SynsetOut;
 import di.uniba.it.wsd.data.Token;
 import di.uniba.it.wsd.dsm.ObjectVector;
-import di.uniba.it.wsd.dsm.VectorSpace;
+import di.uniba.it.wsd.dsm.VectorStore;
 import di.uniba.it.wsd.dsm.VectorUtils;
 import di.uniba.it.wsd.tool.SenseFreqAPI;
 import edu.mit.jwi.item.IPointer;
@@ -97,13 +97,12 @@ public class RevisedLesk {
     private int contextSize = 5;
     private Language language;
     private boolean stemming = false;
-    private VectorSpace dsm;
+    private VectorStore dsm;
     private int maxDepth = 1;
     private SenseFreqAPI senseFreq;
     private boolean scoreGloss = true;
     private ExecuteStatistics execStats = new ExecuteStatistics();
     private static final Logger logger = Logger.getLogger(RevisedLesk.class.getName());
-    private boolean smartLookup = true;
 
     /**
      *
@@ -118,7 +117,7 @@ public class RevisedLesk {
      * @param language
      * @param dsm
      */
-    public RevisedLesk(Language language, VectorSpace dsm) {
+    public RevisedLesk(Language language, VectorStore dsm) {
         this.language = language;
         this.dsm = dsm;
     }
@@ -175,23 +174,7 @@ public class RevisedLesk {
      *
      * @return
      */
-    public boolean isSmartLookup() {
-        return smartLookup;
-    }
-
-    /**
-     *
-     * @param smartLookup
-     */
-    public void setSmartLookup(boolean smartLookup) {
-        this.smartLookup = smartLookup;
-    }
-
-    /**
-     *
-     * @return
-     */
-    public VectorSpace getDsm() {
+    public VectorStore getDsm() {
         return dsm;
     }
 
@@ -285,17 +268,6 @@ public class RevisedLesk {
         return buildBag(sb.toString());
     }
 
-    private Map<String, Float> buildTextContext(List<Token> sentence) throws Exception {
-        StringBuilder sb = new StringBuilder();
-        for (Token token : sentence) {
-            if (token.getPos() != POSenum.OTHER) {
-                sb.append(token.getToken());
-                sb.append(" ");
-            }
-        }
-        return buildBag(sb.toString());
-    }
-
     private void getRelatedSynsets(Map<BabelSynset, RelatedSynset> map, int distance) throws IOException {
         List<BabelSynset> listKey = new ArrayList<>(map.keySet());
         for (BabelSynset synset : listKey) {
@@ -353,11 +325,11 @@ public class RevisedLesk {
                 logger.log(Level.FINEST, "No gloss for synset: {0}", relSynset);
                 execStats.incrementNoGloss();
                 /*List<BabelSense> senses = relSynset.getSenses(this.language);
-                StringBuilder sb = new StringBuilder();
-                for (BabelSense bs : senses) {
-                    sb.append(bs.getLemma().replace("_", " ")).append(" ");
-                }
-                glossesToProcess.add(sb.toString());*/
+                 StringBuilder sb = new StringBuilder();
+                 for (BabelSense bs : senses) {
+                 sb.append(bs.getLemma().replace("_", " ")).append(" ");
+                 }
+                 glossesToProcess.add(sb.toString());*/
             } else {
                 for (BabelGloss gloss : glosses) {
                     glossesToProcess.add(gloss.getGloss());
@@ -479,7 +451,7 @@ public class RevisedLesk {
                 senses = babelNet.getSenses(language, lemma.replace(" ", "_"), postag, BabelSenseSource.WNTR);
             }
         }
-        if (senses == null || senses.isEmpty() || !smartLookup) {
+        if (senses == null || senses.isEmpty()) {
             senses = babelNet.getSenses(language, lemma, postag);
             if (senses == null || senses.isEmpty()) {
                 senses = babelNet.getSenses(language, lemma.replace(" ", "_"), postag);
@@ -555,7 +527,7 @@ public class RevisedLesk {
                                         int si = mainSense.lastIndexOf("#");
                                         if (si >= 0) {
                                             String lemmakey = mainSense.substring(0, si);
-                                            float maxFreq = 0;
+                                            float maxFreq = 1 / (float) senses.size();
                                             for (int l = 0; l < senses.get(j).getSynset().getWordNetOffsets().size(); l++) {
                                                 float freq = senseFreq.getFreq(lemmakey, senses.get(j).getSynset().getWordNetOffsets().get(l));
                                                 if (freq > maxFreq) {
@@ -564,6 +536,8 @@ public class RevisedLesk {
                                             }
                                             sim = 0.5 * sim + 0.5 * maxFreq;
                                         }
+                                    } else {
+                                        sim = 0.5 * sim + 0.5 / (double) senses.size();
                                     }
                                 }
                             }
