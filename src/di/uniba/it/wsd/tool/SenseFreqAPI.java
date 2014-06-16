@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +84,7 @@ public class SenseFreqAPI {
                     SenseFreq sf = new SenseFreq(values[i], Float.parseFloat(values[i + 1]));
                     list.add(sf);
                 }
+                Collections.sort(list);
                 map.put(values[0], list);
             }
         }
@@ -115,6 +117,33 @@ public class SenseFreqAPI {
      * @param offset
      * @return
      */
+    /*public float getFreq(String key, String offset) {
+        List<SenseFreq> senseFreq = getSenseFreqList(key);
+        float score;
+        if (senseFreq.isEmpty())
+            score=0;
+        else {
+            score=1f/(float) senseFreq.size();
+        }
+        for (SenseFreq elem : senseFreq) {
+            if (elem.getId().equals(offset)) {
+                score = elem.getFreq();
+                break;
+            }
+        }
+        return score;
+    }*/
+    /*public Float getFreq(String key, String offset) {
+        List<SenseFreq> senseFreq = getSenseFreqList(key);
+        Float score=null;
+        for (SenseFreq elem : senseFreq) {
+            if (elem.getId().equals(offset)) {
+                score = elem.getFreq();
+                break;
+            }
+        }
+        return score;
+    }*/
     public float getFreq(String key, String offset) {
         List<SenseFreq> senseFreq = getSenseFreqList(key);
         float score;

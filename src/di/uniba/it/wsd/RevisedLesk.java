@@ -183,6 +183,21 @@ public class RevisedLesk {
      */
     public void init() {
         babelNet = BabelNet.getInstance();
+        logger.log(Level.INFO, "Language: {0}", this.language);
+        logger.log(Level.INFO, "Context size: {0}", this.contextSize);
+        logger.log(Level.INFO, "Depth: {0}", this.maxDepth);
+        logger.log(Level.INFO, "Stemmig: {0}", this.stemming);
+        logger.log(Level.INFO, "Score gloss: {0}", this.scoreGloss);
+        if (this.senseFreq != null) {
+            logger.info("Sense distribution ENABLED");
+        } else {
+            logger.info("Sense distribution DISABLED");
+        }
+        if (this.dsm != null) {
+            logger.info("Distributional Semantic Model ENABLED");
+        } else {
+            logger.info("Distributional Semantic Model DISABLED");
+        }
     }
 
     /**
@@ -324,12 +339,12 @@ public class RevisedLesk {
             if (glosses.isEmpty()) {
                 logger.log(Level.FINEST, "No gloss for synset: {0}", relSynset);
                 execStats.incrementNoGloss();
-                /*List<BabelSense> senses = relSynset.getSenses(this.language);
-                 StringBuilder sb = new StringBuilder();
-                 for (BabelSense bs : senses) {
-                 sb.append(bs.getLemma().replace("_", " ")).append(" ");
-                 }
-                 glossesToProcess.add(sb.toString());*/
+                List<BabelSense> senses = relSynset.getSenses(this.language);
+                StringBuilder sb = new StringBuilder();
+                for (BabelSense bs : senses) {
+                    sb.append(bs.getLemma().replace("_", " ")).append(" ");
+                }
+                glossesToProcess.add(sb.toString());
             } else {
                 for (BabelGloss gloss : glosses) {
                     glossesToProcess.add(gloss.getGloss());
@@ -399,7 +414,11 @@ public class RevisedLesk {
         while (it2.hasNext()) {
             n2 += Math.pow(it2.next().doubleValue(), 2);
         }
-        return ip / (n1 * n2);
+        if (n1 == 0 || n2 == 0) {
+            return 0;
+        } else {
+            return ip / (n1 * n2);
+        }
     }
 
     private float[] buildVector(Map<String, Float> bag, boolean normalize) {
@@ -439,27 +458,26 @@ public class RevisedLesk {
     }
 
     private List<BabelSense> lookupSense(Language language, String lemma, POS postag) throws IOException {
-        List<BabelSense> senses;
-        if (language.equals(Language.EN)) {
-            senses = babelNet.getSenses(language, lemma, postag, BabelSenseSource.WN);
-            if (senses == null || senses.isEmpty()) {
-                senses = babelNet.getSenses(language, lemma.replace(" ", "_"), postag, BabelSenseSource.WN);
-            }
-        } else {
+        List<BabelSense> senses = babelNet.getSenses(language, lemma, postag, BabelSenseSource.WN);
+        if (senses == null || senses.isEmpty()) {
+            senses = babelNet.getSenses(language, lemma.replace(" ", "_"), postag, BabelSenseSource.WN);
+        }
+        if (senses == null || senses.isEmpty()) {
             senses = babelNet.getSenses(language, lemma, postag, BabelSenseSource.WNTR);
-            if (senses == null || senses.isEmpty()) {
-                senses = babelNet.getSenses(language, lemma.replace(" ", "_"), postag, BabelSenseSource.WNTR);
-            }
+        }
+        if (senses == null || senses.isEmpty()) {
+            senses = babelNet.getSenses(language, lemma.replace(" ", "_"), postag, BabelSenseSource.WNTR);
         }
         if (senses == null || senses.isEmpty()) {
             senses = babelNet.getSenses(language, lemma, postag);
-            if (senses == null || senses.isEmpty()) {
-                senses = babelNet.getSenses(language, lemma.replace(" ", "_"), postag);
-            }
+        }
+        if (senses == null || senses.isEmpty()) {
+            senses = babelNet.getSenses(language, lemma.replace(" ", "_"), postag);
         }
         if (senses == null || senses.isEmpty()) {
             Logger.getLogger(RevisedLesk.class.getName()).log(Level.WARNING, "No senses for {0}, pos-tag {1}", new Object[]{lemma, postag});
         }
+        //remove duplicate senses
         if (senses != null && !senses.isEmpty()) {
             Set<String> ids = new HashSet<>();
             for (int i = senses.size() - 1; i >= 0; i--) {
@@ -515,29 +533,24 @@ public class RevisedLesk {
                             double sim = 0;
                             Map<String, Float> bag = buildGlossBag.get(j);
                             sim = sim(contextBag, bag);
-                            if (senseFreq != null) {
-                                if (language.equals(Language.EN)) {
-                                    String lemmakey = token.getLemma() + "#" + convertPosEnum(token.getPos());
-                                    float freq = senseFreq.getFreq(lemmakey, senses.get(j).getWordNetOffset());
-                                    //sim = freq * sim;
-                                    sim = 0.5 * sim + 0.5 * freq;
-                                } else {
-                                    String mainSense = senses.get(j).getSynset().getMainSense();
-                                    if (mainSense != null && !mainSense.startsWith("WIKI:") && mainSense.length() > 0) {
-                                        int si = mainSense.lastIndexOf("#");
-                                        if (si >= 0) {
-                                            String lemmakey = mainSense.substring(0, si);
-                                            float maxFreq = 1 / (float) senses.size();
-                                            for (int l = 0; l < senses.get(j).getSynset().getWordNetOffsets().size(); l++) {
-                                                float freq = senseFreq.getFreq(lemmakey, senses.get(j).getSynset().getWordNetOffsets().get(l));
-                                                if (freq > maxFreq) {
-                                                    maxFreq = freq;
-                                                }
+                            if (language.equals(Language.EN)) {
+                                String lemmakey = token.getLemma() + "#" + convertPosEnum(token.getPos());
+                                float freq = senseFreq.getFreq(lemmakey, senses.get(j).getWordNetOffset());
+                                sim = 0.5 * sim + 0.5 * freq;
+                            } else {
+                                String mainSense = senses.get(j).getSynset().getMainSense();
+                                if (mainSense != null && !mainSense.startsWith("WIKI:") && mainSense.length() > 0) {
+                                    int si = mainSense.lastIndexOf("#");
+                                    if (si >= 0) {
+                                        String lemmakey = mainSense.substring(0, si);
+                                        float maxFreq = 0;
+                                        for (int l = 0; l < senses.get(j).getSynset().getWordNetOffsets().size(); l++) {
+                                            float freq = senseFreq.getFreq(lemmakey, senses.get(j).getSynset().getWordNetOffsets().get(l));
+                                            if (freq > maxFreq) {
+                                                maxFreq = freq;
                                             }
-                                            sim = 0.5 * sim + 0.5 * maxFreq;
                                         }
-                                    } else {
-                                        sim = 0.5 * sim + 0.5 / (double) senses.size();
+                                        sim = 0.5 * sim + 0.5 * maxFreq;
                                     }
                                 }
                             }

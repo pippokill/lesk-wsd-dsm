@@ -1,4 +1,4 @@
-Enhanced Lesk Word Sense Disambiguation algorithm through a Distributional Semantic Model
+An Enhanced Lesk Word Sense Disambiguation algorithm through a Distributional Semantic Model
 ==========================================================================
 
 General info
@@ -8,7 +8,7 @@ This software implements a Word Sense Disambiguation algorithm based on the simp
 
 Details about the algorithm will be published in the following paper:
 
-*Pierpaolo Basile, Annalina Caputo and Giovanni Semeraro*. **Enhanced Lesk Word Sense Disambiguation algorithm through a Distributional Semantic Model**. The paper was accepted to COLING 2014 conference.
+*Pierpaolo Basile, Annalina Caputo and Giovanni Semeraro*. **An Enhanced Lesk Word Sense Disambiguation algorithm through a Distributional Semantic Model**. The paper was accepted to COLING 2014 conference.
 
 If you use this software in writing scientific papers, or you use this
 software in any other medium serving scientists or students (e.g. web-sites,
