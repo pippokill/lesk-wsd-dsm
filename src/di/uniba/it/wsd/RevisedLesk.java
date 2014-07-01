@@ -63,6 +63,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.math.stat.StatUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -91,8 +92,20 @@ public class RevisedLesk {
     /**
      * Constant for BabelNet output format
      */
-    public static final int OUT_BABELNET = 2000;
+    public static final int OUT_BABELNET = 1100;
+
+    /**
+     * Constant for Synset Distribution function
+     */
+    public static final int SD_PROB = 2000;
+    /**
+     * Constant for Synset Distribution function
+     */
+    public static final int SD_OCC = 2100;
     private int outType = OUT_BABELNET;
+    private int sdType = SD_PROB;
+    private double weightWsd = 0.5;
+    private double weightSd = 0.5;
     private BabelNet babelNet;
     private int contextSize = 5;
     private Language language;
@@ -120,6 +133,30 @@ public class RevisedLesk {
     public RevisedLesk(Language language, VectorStore dsm) {
         this.language = language;
         this.dsm = dsm;
+    }
+
+    public int getSdType() {
+        return sdType;
+    }
+
+    public void setSdType(int sdType) {
+        this.sdType = sdType;
+    }
+
+    public double getWeightWsd() {
+        return weightWsd;
+    }
+
+    public void setWeightWsd(double weightWsd) {
+        this.weightWsd = weightWsd;
+    }
+
+    public double getWeightSd() {
+        return weightSd;
+    }
+
+    public void setWeightSd(double weightSd) {
+        this.weightSd = weightSd;
     }
 
     /**
@@ -188,8 +225,14 @@ public class RevisedLesk {
         logger.log(Level.INFO, "Depth: {0}", this.maxDepth);
         logger.log(Level.INFO, "Stemmig: {0}", this.stemming);
         logger.log(Level.INFO, "Score gloss: {0}", this.scoreGloss);
+        logger.log(Level.INFO, "Weigths, wsd: {0}, synset distr. {1}", new Object[]{weightWsd, weightSd});
         if (this.senseFreq != null) {
             logger.info("Sense distribution ENABLED");
+            if (sdType == SD_OCC) {
+                logger.info("Sense distribution type=occurrences");
+            } else if (sdType == SD_OCC) {
+                logger.info("Sense distribution type=probability");
+            }
         } else {
             logger.info("Sense distribution DISABLED");
         }
@@ -528,30 +571,41 @@ public class RevisedLesk {
                         senses = lookupSense(language, token.getLemma(), POS.ADVERB);
                     }
                     if (senses != null) {
+                        float[] as = null;
+                        if (senseFreq != null && sdType == SD_OCC) {
+                            as = senseFreq.getOccurrencesArray(senses);
+                        }
                         List<Map<String, Float>> buildGlossBag = buildGlossBag(senses);
                         for (int j = 0; j < senses.size(); j++) {
                             double sim = 0;
                             Map<String, Float> bag = buildGlossBag.get(j);
+                            //assign WSD algorithm score
                             sim = sim(contextBag, bag);
-                            if (language.equals(Language.EN)) {
-                                String lemmakey = token.getLemma() + "#" + convertPosEnum(token.getPos());
-                                float freq = senseFreq.getFreq(lemmakey, senses.get(j).getWordNetOffset());
-                                sim = 0.5 * sim + 0.5 * freq;
-                            } else {
-                                String mainSense = senses.get(j).getSynset().getMainSense();
-                                if (mainSense != null && !mainSense.startsWith("WIKI:") && mainSense.length() > 0) {
-                                    int si = mainSense.lastIndexOf("#");
-                                    if (si >= 0) {
-                                        String lemmakey = mainSense.substring(0, si);
-                                        float maxFreq = 0;
-                                        for (int l = 0; l < senses.get(j).getSynset().getWordNetOffsets().size(); l++) {
-                                            float freq = senseFreq.getFreq(lemmakey, senses.get(j).getSynset().getWordNetOffsets().get(l));
-                                            if (freq > maxFreq) {
-                                                maxFreq = freq;
-                                            }
+                            if (senseFreq != null) {
+                                if (sdType == SD_PROB) {
+                                    if (language.equals(Language.EN)) {
+                                        if (senses.get(j).getWordNetOffset() != null && senses.get(j).getWordNetOffset().length() > 0) {
+                                            String lemmakey = token.getLemma() + "#" + convertPosEnum(token.getPos());
+                                            float freq = senseFreq.getSynsetProbability(lemmakey, senses.get(j).getWordNetOffset(), senses.size());
+                                            sim = weightWsd * sim + weightSd * freq;
+                                        } else {
+                                            sim = weightWsd * sim + weightSd * computeLDscore(token.getToken(), senses.get(j).getLemma());
                                         }
-                                        sim = 0.5 * sim + 0.5 * maxFreq;
+                                    } else {
+                                        String mainSense = senses.get(j).getSynset().getMainSense();
+                                        if (mainSense != null && !mainSense.startsWith("WIKI:") && mainSense.length() > 0) {
+                                            int si = mainSense.lastIndexOf("#");
+                                            if (si >= 0) {
+                                                String lemmakey = token.getLemma() + "#" + convertPosEnum(token.getPos());
+                                                float maxFreq = senseFreq.getMaxSenseProbability(lemmakey, senses.get(j), senses.size());
+                                                sim = weightWsd * sim + weightSd * maxFreq;
+                                            }
+                                        } else {
+                                            sim = weightWsd * sim + weightSd * computeLDscore(token.getToken(), senses.get(j).getLemma());
+                                        }
                                     }
+                                } else if (sdType == SD_OCC) {
+                                    sim = weightWsd * sim + weightSd * as[j];
                                 }
                             }
                             if (outType == OUT_BABELNET) {
@@ -568,6 +622,12 @@ public class RevisedLesk {
                 }
             }
         }
+    }
+
+    private float computeLDscore(String s1, String s2) {
+        float maxLength = (float) Math.max(s1.length(), s2.length());
+        float ld = (float) StringUtils.getLevenshteinDistance(s1, s2);
+        return 1 - ld / maxLength;
     }
 
     /**

@@ -28,9 +28,9 @@ public class TestBabelNet {
     public static void main(String[] args) {
         try {
             BabelNet babelNet = BabelNet.getInstance();
-            List<BabelSense> senses = babelNet.getSenses(Language.IT, "New_York",POS.NOUN,BabelSenseSource.WNTR);
+            List<BabelSense> senses = babelNet.getSenses(Language.IT, "suono",POS.NOUN,BabelSenseSource.WNTR);
             for (BabelSense sense:senses) {
-                System.out.println(sense);
+                System.out.println(sense.getSynset().getId()+"\t"+sense.getPosition());
             }
         } catch (IOException ex) {
             Logger.getLogger(TestBabelNet.class.getName()).log(Level.SEVERE, null, ex);

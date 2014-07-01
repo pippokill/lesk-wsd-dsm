@@ -189,9 +189,36 @@ public class RunWSD {
                 wsd = new RevisedLesk(language, dsm);
                 wsd.setStemming(false);
             }
-            String senseFreqFilename = props.getProperty("-sc");
-            if (senseFreqFilename != null) {
-                SenseFreqAPI sfapi = new SenseFreqAPI(new File(senseFreqFilename));
+            String linComW = props.getProperty("-lc");
+            if (linComW != null) {
+                String[] split = linComW.split(":");
+                if (split.length == 2) {
+                    try {
+                        wsd.setWeightWsd(Double.parseDouble(split[0]));
+                        wsd.setWeightSd(Double.parseDouble(split[1]));
+                    } catch (NumberFormatException nfex) {
+                        throw new Exception("Not valid weight", nfex);
+                    }
+                } else {
+                    throw new Exception("Not valid weight");
+                }
+            }
+            String sdType = props.getProperty("-sdType");
+            if (sdType != null) {
+                switch (sdType) {
+                    case "prob":
+                        wsd.setSdType(RevisedLesk.SD_PROB);
+                        break;
+                    case "occ":
+                        wsd.setSdType(RevisedLesk.SD_OCC);
+                        break;
+                    default:
+                        throw new Exception("Not valid synset distribution type: " + sdType);
+                }
+            }
+            String senseFreqDir = props.getProperty("-sc");
+            if (senseFreqDir != null) {
+                SenseFreqAPI sfapi = new SenseFreqAPI(new File(senseFreqDir + "/sense.freq"), new File(senseFreqDir + "/sense.occ"));
                 sfapi.init();
                 wsd.setSenseFreq(sfapi);
             }

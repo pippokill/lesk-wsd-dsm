@@ -66,20 +66,20 @@ public class BuildOccSense {
                 String offset = null;
                 int occ = Integer.parseInt(values[3]);
                 if (poss[0].equals("1")) {
-                    offset = "n" + values[1];
+                    offset = values[1] + "n";
                 } else if (poss[0].equals("2")) {
-                    offset = "v" + values[1];
+                    offset = values[1] + "v";
                 } else if (poss[0].equals("3") || poss[0].equals("5")) {
-                    offset = "a" + values[1];
+                    offset = values[1] + "a";
                 } else if (poss[0].equals("4")) {
-                    offset = "r" + values[1];
+                    offset = values[1] + "r";
                 }
                 for (int i = 0; i < occ; i++) {
                     synset.add(offset);
                 }
             }
             in.close();
-            
+
             BufferedWriter out = new BufferedWriter(new FileWriter(new File(args[1])));
             Iterator<Multiset.Entry<String>> iterator = synset.entrySet().iterator();
             while (iterator.hasNext()) {
