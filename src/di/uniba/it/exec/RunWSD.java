@@ -209,11 +209,27 @@ public class RunWSD {
                     case "prob":
                         wsd.setSdType(RevisedLesk.SD_PROB);
                         break;
+                    case "prob_cross":
+                        wsd.setSdType(RevisedLesk.SD_PROB_CROSS);
+                        break;
                     case "occ":
                         wsd.setSdType(RevisedLesk.SD_OCC);
                         break;
                     default:
                         throw new Exception("Not valid synset distribution type: " + sdType);
+                }
+            }
+            String wikiType = props.getProperty("-wikiType");
+            if (wikiType != null) {
+                switch (wikiType) {
+                    case "lev":
+                        wsd.setWikiType(RevisedLesk.WIKI_LEV);
+                        break;
+                    case "uni":
+                        wsd.setWikiType(RevisedLesk.WIKI_UNI);
+                        break;
+                    default:
+                        throw new Exception("Not valid wiki score type: " + sdType);
                 }
             }
             String senseFreqDir = props.getProperty("-sc");

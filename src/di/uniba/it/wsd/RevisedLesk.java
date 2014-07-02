@@ -101,9 +101,22 @@ public class RevisedLesk {
     /**
      * Constant for Synset Distribution function
      */
-    public static final int SD_OCC = 2100;
+    public static final int SD_PROB_CROSS = 2100;
+    /**
+     * Constant for Synset Distribution function
+     */
+    public static final int SD_OCC = 2200;
+    /**
+     * Constant for Wiki scoring function
+     */
+    public static final int WIKI_LEV = 3000;
+    /**
+     * Constant for Wiki scoring function
+     */
+    public static final int WIKI_UNI = 3100;
     private int outType = OUT_BABELNET;
     private int sdType = SD_PROB;
+    private int wikiType = WIKI_LEV;
     private double weightWsd = 0.5;
     private double weightSd = 0.5;
     private BabelNet babelNet;
@@ -141,6 +154,14 @@ public class RevisedLesk {
 
     public void setSdType(int sdType) {
         this.sdType = sdType;
+    }
+
+    public int getWikiType() {
+        return wikiType;
+    }
+
+    public void setWikiType(int wikiType) {
+        this.wikiType = wikiType;
     }
 
     public double getWeightWsd() {
@@ -230,8 +251,15 @@ public class RevisedLesk {
             logger.info("Sense distribution ENABLED");
             if (sdType == SD_OCC) {
                 logger.info("Sense distribution type=occurrences");
-            } else if (sdType == SD_OCC) {
+            } else if (sdType == SD_PROB) {
                 logger.info("Sense distribution type=probability");
+            } else if (sdType == SD_PROB_CROSS) {
+                logger.info("Sense distribution type=cross probability");
+            }
+            if (wikiType == WIKI_LEV) {
+                logger.info("Wiki synset scoring: LEV");
+            } else if (wikiType == WIKI_UNI) {
+                logger.info("Wiki synset scoring: Uniform");
             }
         } else {
             logger.info("Sense distribution DISABLED");
@@ -356,21 +384,6 @@ public class RevisedLesk {
         for (int i = 0; i < maxDepth; i++) {
             getRelatedSynsets(relatedMap, i + 1);
         }
-        /*List<BabelNetGraphEdge> successorEdges = babelNet.getSuccessorEdges(synset.getId());
-         for (BabelNetGraphEdge edge : successorEdges) {
-         if (edge.getLanguage().equals(this.language)) {
-         String target = edge.getTarget();
-         if (!edge.getPointer().getName().equalsIgnoreCase("antonym")) {
-         BabelSynset synsetSucc = babelNet.getSynsetFromId(target);
-         if (!relatedMap.containsKey(synsetSucc)) {
-         relatedMap.put(synsetSucc, new RelatedSynset(synsetSucc, 1));
-         //System.out.println("Added "+synsetSucc);
-         }
-         }
-         } else {
-         //System.out.println("No english");
-         }
-         }*/
         Iterator<BabelSynset> itRel = relatedMap.keySet().iterator();
         Map<String, Float> bag = new HashMap<>();
         while (itRel.hasNext()) {
@@ -582,29 +595,48 @@ public class RevisedLesk {
                             //assign WSD algorithm score
                             sim = sim(contextBag, bag);
                             if (senseFreq != null) {
-                                if (sdType == SD_PROB) {
-                                    if (language.equals(Language.EN)) {
+                                if (sdType == SD_PROB) { //sense distribution based on conditional probability p(si|w)
+                                    if (language.equals(Language.EN)) {  //English is the WordNet native language
                                         if (senses.get(j).getWordNetOffset() != null && senses.get(j).getWordNetOffset().length() > 0) {
                                             String lemmakey = token.getLemma() + "#" + convertPosEnum(token.getPos());
                                             float freq = senseFreq.getSynsetProbability(lemmakey, senses.get(j).getWordNetOffset(), senses.size());
                                             sim = weightWsd * sim + weightSd * freq;
                                         } else {
-                                            sim = weightWsd * sim + weightSd * computeLDscore(token.getToken(), senses.get(j).getLemma());
+                                            if (wikiType == WIKI_LEV) {
+                                                sim = weightWsd * sim + weightSd * computeLDscore(token.getToken(), senses.get(j).getLemma());
+                                            } else {
+                                                sim = weightWsd * sim + weightSd * (1 / (double) senses.size());
+                                            }
                                         }
-                                    } else {
+                                    } else { //Translate WordNet synset from other language
                                         String mainSense = senses.get(j).getSynset().getMainSense();
                                         if (mainSense != null && !mainSense.startsWith("WIKI:") && mainSense.length() > 0) {
-                                            int si = mainSense.lastIndexOf("#");
-                                            if (si >= 0) {
-                                                String lemmakey = token.getLemma() + "#" + convertPosEnum(token.getPos());
-                                                float maxFreq = senseFreq.getMaxSenseProbability(lemmakey, senses.get(j), senses.size());
-                                                sim = weightWsd * sim + weightSd * maxFreq;
-                                            }
+                                            String lemmakey = token.getLemma() + "#" + convertPosEnum(token.getPos());
+                                            float maxFreq = senseFreq.getMaxSenseProbability(lemmakey, senses.get(j), senses.size());
+                                            sim = weightWsd * sim + weightSd * maxFreq;
                                         } else {
-                                            sim = weightWsd * sim + weightSd * computeLDscore(token.getToken(), senses.get(j).getLemma());
+                                            if (wikiType == WIKI_LEV) {
+                                                sim = weightWsd * sim + weightSd * computeLDscore(token.getToken(), senses.get(j).getLemma());
+                                            } else {
+                                                sim = weightWsd * sim + weightSd * (1 / (double) senses.size());
+                                            }
                                         }
                                     }
-                                } else if (sdType == SD_OCC) {
+                                } else if (sdType == SD_PROB_CROSS) { //Use english sense distribution for other langauge
+                                    String mainSense = senses.get(j).getSynset().getMainSense();
+                                    if (mainSense != null && !mainSense.startsWith("WIKI:") && mainSense.length() > 0) {
+                                        int si = mainSense.lastIndexOf("#");
+                                        String lemmakey = mainSense.substring(0, si);
+                                        float maxFreq = senseFreq.getMaxSenseProbability(lemmakey, senses.get(j), senses.size());
+                                        sim = weightWsd * sim + weightSd * maxFreq;
+                                    } else {
+                                        if (wikiType == WIKI_LEV) {
+                                            sim = weightWsd * sim + weightSd * computeLDscore(token.getToken(), senses.get(j).getLemma());
+                                        } else {
+                                            sim = weightWsd * sim + weightSd * (1 / (double) senses.size());
+                                        }
+                                    }
+                                } else if (sdType == SD_OCC) { //language independent based on synset offset
                                     sim = weightWsd * sim + weightSd * as[j];
                                 }
                             }
