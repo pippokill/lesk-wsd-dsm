@@ -16,10 +16,26 @@ import java.util.List;
  */
 public interface VectorStore {
     
+    /**
+     *
+     * @param inputFile
+     * @throws IOException
+     */
     public void init(File inputFile) throws IOException;
     
+    /**
+     *
+     * @param term
+     * @return
+     */
     public float[] getVector(String term);
     
+    /**
+     *
+     * @param word
+     * @param n
+     * @return
+     */
     public List<SpaceResult> findSimilar(String word, int n);
     
 }

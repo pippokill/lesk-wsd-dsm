@@ -32,7 +32,7 @@
  * GNU GENERAL PUBLIC LICENSE - Version 3, 29 June 2007
  *
  */
-package di.uniba.it.wsd.tool;
+package di.uniba.it.wsd.tool.wn;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
@@ -47,7 +47,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Build synsets occurrences information exploiting the index.sense WordNet file
  * @author pierpaolo
  */
 public class BuildOccSense {

@@ -101,6 +101,12 @@ public class DataVectorStore implements VectorStore {
         return vectors.get(key);
     }
 
+    /**
+     *
+     * @param word
+     * @param n
+     * @return
+     */
     public List<SpaceResult> findSimilar(String word, int n) {
         float[] v1 = vectors.get(word);
         if (v1 == null) {

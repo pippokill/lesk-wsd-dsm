@@ -42,7 +42,6 @@ import di.uniba.it.wsd.data.Token;
 import di.uniba.it.wsd.dsm.ObjectVector;
 import di.uniba.it.wsd.dsm.VectorStore;
 import di.uniba.it.wsd.dsm.VectorUtils;
-import di.uniba.it.wsd.tool.SenseFreqAPI;
 import edu.mit.jwi.item.IPointer;
 import edu.mit.jwi.item.POS;
 import it.uniroma1.lcl.babelnet.BabelGloss;
@@ -148,34 +147,66 @@ public class RevisedLesk {
         this.dsm = dsm;
     }
 
+    /**
+     *
+     * @return
+     */
     public int getSdType() {
         return sdType;
     }
 
+    /**
+     *
+     * @param sdType
+     */
     public void setSdType(int sdType) {
         this.sdType = sdType;
     }
 
+    /**
+     *
+     * @return
+     */
     public int getWikiType() {
         return wikiType;
     }
 
+    /**
+     *
+     * @param wikiType
+     */
     public void setWikiType(int wikiType) {
         this.wikiType = wikiType;
     }
 
+    /**
+     *
+     * @return
+     */
     public double getWeightWsd() {
         return weightWsd;
     }
 
+    /**
+     *
+     * @param weightWsd
+     */
     public void setWeightWsd(double weightWsd) {
         this.weightWsd = weightWsd;
     }
 
+    /**
+     *
+     * @return
+     */
     public double getWeightSd() {
         return weightSd;
     }
 
+    /**
+     *
+     * @param weightSd
+     */
     public void setWeightSd(double weightSd) {
         this.weightSd = weightSd;
     }

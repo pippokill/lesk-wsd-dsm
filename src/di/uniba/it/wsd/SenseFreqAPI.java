@@ -32,7 +32,7 @@
  * GNU GENERAL PUBLIC LICENSE - Version 3, 29 June 2007
  *
  */
-package di.uniba.it.wsd.tool;
+package di.uniba.it.wsd;
 
 import it.uniroma1.lcl.babelnet.BabelSense;
 import java.io.BufferedReader;
@@ -60,6 +60,9 @@ public class SenseFreqAPI {
      */
     public Map<String, List<SenseFreq>> map = new HashMap<>();
 
+    /**
+     *
+     */
     public Map<String, Integer> occs = new HashMap<>();
 
     private final File freqsFile;
@@ -77,6 +80,11 @@ public class SenseFreqAPI {
         this.occsFile = null;
     }
 
+    /**
+     *
+     * @param freqsFile
+     * @param occsFile
+     */
     public SenseFreqAPI(File freqsFile, File occsFile) {
         this.freqsFile = freqsFile;
         this.occsFile = occsFile;
@@ -164,6 +172,11 @@ public class SenseFreqAPI {
         return score;
     }
 
+    /**
+     *
+     * @param offset
+     * @return
+     */
     public Float getSynsetOccurrences(String offset) {
         Integer get = occs.get(offset);
         if (get == null) {
@@ -173,6 +186,11 @@ public class SenseFreqAPI {
         }
     }
 
+    /**
+     *
+     * @param sense
+     * @return
+     */
     public float getMaxSenseOccurrences(BabelSense sense) {
         float maxOcc = 0;
         for (int l = 0; l < sense.getSynset().getWordNetOffsets().size(); l++) {
@@ -184,6 +202,13 @@ public class SenseFreqAPI {
         return maxOcc;
     }
 
+    /**
+     *
+     * @param key
+     * @param sense
+     * @param maxSize
+     * @return
+     */
     public float getMaxSenseProbability(String key, BabelSense sense, int maxSize) {
         float maxProb = 0;
         for (int l = 0; l < sense.getSynset().getWordNetOffsets().size(); l++) {
@@ -195,6 +220,11 @@ public class SenseFreqAPI {
         return maxProb;
     }
 
+    /**
+     *
+     * @param senses
+     * @return
+     */
     public float[] getOccurrencesArray(List<BabelSense> senses) {
         float[] a = new float[senses.size()];
         float norma = 0;

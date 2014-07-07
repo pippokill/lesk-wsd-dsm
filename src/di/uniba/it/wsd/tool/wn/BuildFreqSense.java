@@ -35,7 +35,7 @@
    GNU GENERAL PUBLIC LICENSE - Version 3, 29 June 2007
  **/
 
-package di.uniba.it.wsd.tool;
+package di.uniba.it.wsd.tool.wn;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -50,7 +50,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Build synsets probability information exploiting the index.sense WordNet file
  * @author pierpaolo
  */
 public class BuildFreqSense {

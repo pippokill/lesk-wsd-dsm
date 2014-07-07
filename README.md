@@ -37,7 +37,13 @@ The script requires the following parameters:
 
 -lang *it|en|es|de|fr*: the language of the input text, *en* is the default value
 
--sc *file_path*: the file which contains information about synsets distribution. A file extracted from WordNet 3.0 is provided in *resources/sense* folder
+-sc *dir_path*: the directory which contains information about both synsets probability and synsets occurrences. Files extracted from WordNet are in *resources/sense/en/*, while files extracted form MultiSemCor for Italian are in *resources/sense/it/*.
+
+-sdType *prob|prob_cross|occ*: the function used to score synset. prob=conditional probability, occ=synset frequency, prob_cross=conditional probability computed on a different language
+
+-wikiType *lev|uni*: the function used to score BabelSynset coming from Wikipedia. lev=Levenshtein similarity between lemmas, uni=uniform probability
+
+-lc decimal:decimal: the weight assigned respectively to the DSM and the Sense Distribution. (default 0.5:0.5).
 
 -sg *true|false*: enable/disable gloss scoring function (true is the default value)
 

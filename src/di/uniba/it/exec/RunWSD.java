@@ -45,7 +45,7 @@ import di.uniba.it.wsd.data.Token;
 import di.uniba.it.wsd.dsm.DataVectorStore;
 import di.uniba.it.wsd.dsm.LuceneVectorStore;
 import di.uniba.it.wsd.dsm.VectorStore;
-import di.uniba.it.wsd.tool.SenseFreqAPI;
+import di.uniba.it.wsd.SenseFreqAPI;
 import it.uniroma1.lcl.jlt.util.Language;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -65,52 +65,8 @@ public class RunWSD {
     private static final String OUTFORMAT_TASK = "task";
 
     /**
-     * The main class which requires the following parameters:
      *
-     * -i *input_file*: the file which contains the text that will be
-     * disambiguated
-     *
-     * -o *output_file*: the file in which you want to save the output
-     *
-     * -cm *sent|doc|text*: indicates how the input text will be read and
-     * disambiguated. The available values are: "sent" one sentence per time,
-     * "doc" one doc per time, "text" read the full file
-     *
-     * -f *xml|oldxml|plain*: indicates the input file format. The available
-     * values are: "xml" for the SemEval-2013 Task 12 file format
-     * (http://www.cs.york.ac.uk/semeval-2013/task12/), "oldxml" old SemEval XML
-     * format, "plain" for plain text. The plain text must contain one token for
-     * each line. Each line must contains three values separated by TAB: token,
-     * pos-tag, lemma. The pos-tag has four possible values: n (noun), v (verb),
-     * j (adjective), r (adverb), any other character for other tags. An example
-     * is reported in the *text* folder
-     *
-     * -dsm *file_path*: the binary file which describes the distributional
-     * semantic model. A model for the English language is provided into the
-     * *resoruces/dsm* folder
-     *
-     * -lang *it|en|es|de|fr*: the language of the input text, *en* is the
-     * default value
-     *
-     * -sc *file_path*: the file which contains information about synsets
-     * distribution. A file extracted from WordNet 3.0 is provided in
-     * *resources/sense* folder
-     *
-     * -sg *true|false*: enable/disable gloss scoring function (true is the
-     * default value)
-     *
-     * -sf *wn|bn*: output synset format: "wn" uses WordNet offset, while "bn"
-     * uses BabelNet id (bn is the default value)
-     *
-     * -c *integer value|max*: indicates the context size, "max" considers the
-     * whole text
-     *
-     * -of *plain|task*: output format: "plain" uses plain text file to store
-     * word meanings, while task uses the file format defined in SemEval-2013
-     * Task 12
-     *
-     * -stem *true|false*: enable/disable glosses stemming
-     *
+     * README.md file contains information about main arguments
      * @param args the command line arguments
      */
     public static void main(String[] args) {
