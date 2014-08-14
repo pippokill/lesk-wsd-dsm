@@ -6,17 +6,27 @@ General info
 
 This software implements a Word Sense Disambiguation algorithm based on the simple Lesk approach integrating distributional semantics to compute the overlap between glosses.
 
-Details about the algorithm will be published in the following paper:
+Details about the algorithm are published in the following paper:
 
-*Pierpaolo Basile, Annalina Caputo and Giovanni Semeraro*. **An Enhanced Lesk Word Sense Disambiguation algorithm through a Distributional Semantic Model**. The paper was accepted to COLING 2014 conference.
+*Pierpaolo Basile, Annalina Caputo and Giovanni Semeraro*. **An Enhanced Lesk Word Sense Disambiguation algorithm through a Distributional Semantic Model**. Proceedings of COLING 2014, the 25th International Conference on Computational Linguistics: Technical Papers.
 
 If you use this software in writing scientific papers, or you use this
 software in any other medium serving scientists or students (e.g. web-sites,
 CD-ROMs) please include the following citation:
 
-**(NOTE citation details are not yet available)**
+@InProceedings{basile-caputo-semeraro:2014:Coling,
+  author    = {Basile, Pierpaolo  and  Caputo, Annalina  and  Semeraro, Giovanni},
+  title     = {An Enhanced Lesk Word Sense Disambiguation Algorithm through a Distributional Semantic Model},
+  booktitle = {Proceedings of COLING 2014, the 25th International Conference on Computational Linguistics: Technical Papers},
+  month     = {August},
+  year      = {2014},
+  address   = {Dublin, Ireland},
+  publisher = {Dublin City University and Association for Computational Linguistics},
+  pages     = {1591--1600},
+  url       = {http://www.aclweb.org/anthology/C14-1151}
+}
 
-The adopted knowledge base is BabelNet ver. 1.1 available on-line: http://babelnet.org/download.jsp. The software is compatible with only BabelNet 1.1.
+The adopted knowledge base is BabelNet ver. 1.1 available on-line: http://babelnet.org/download.jsp.
 
 Usage
 -----
@@ -69,6 +79,3 @@ Several resources are used by the algorithm:
 >**Distribution Semantic Models (DSM):** a binary file which contains information about the vector space in which words are represented. It is possible to build a DSM from a text file. More information are reported in the class *di.uniba.it.wsd.dsm.Txt2Bin.java*.
 
 >**Sense distribution:** a file which contains information about the probability assigned to each WordNet synset. A file for WordNet 3.0 synsets is provided. More information are reported in the class *di.uniba.it.wsd.tool.BuildFreqSense*.
-
-
-> Written with [StackEdit](https://stackedit.io/).
