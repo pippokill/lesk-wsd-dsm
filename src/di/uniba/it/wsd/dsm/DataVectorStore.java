@@ -46,6 +46,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -72,9 +73,16 @@ public class DataVectorStore implements VectorStore {
     public void init(File inputFile) throws IOException {
         vectors = new HashMap<>();
         DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(inputFile)));
-        vectorType = input.readUTF();
-        dimension = input.readInt();
-        ObjectVector.vecLength=dimension;
+        String header = input.readUTF();
+        Properties props = readHeader(header);
+        if (props == null) {
+            vectorType = input.readUTF();
+            dimension = input.readInt();
+        } else {
+            dimension = Integer.parseInt(props.getProperty("-dim"));
+            vectorType = props.getProperty("-type");
+        }
+        ObjectVector.vecLength = dimension;
         int c = 0;
         while (input.available() > 0) {
             String key = input.readUTF();
@@ -130,6 +138,23 @@ public class DataVectorStore implements VectorStore {
         List<SpaceResult> list = new ArrayList<>(queue);
         Collections.sort(list);
         return list;
+    }
+
+    private Properties readHeader(String line) throws IllegalArgumentException {
+        if (line.contains("-dim") && line.contains("-seed") && line.contains("-type")) {
+            Properties props = new Properties();
+            String[] split = line.split("\t");
+            if (split.length % 2 == 0) {
+                for (int i = 0; i < split.length; i = i + 2) {
+                    props.put(split[i], split[i + 1]);
+                }
+            } else {
+                throw new IllegalArgumentException("Not valid header: " + line);
+            }
+            return props;
+        } else {
+            return null;
+        }
     }
 
 }
