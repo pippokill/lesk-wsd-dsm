@@ -194,7 +194,7 @@ public class SenseFreqAPI {
     public float getMaxSenseOccurrences(BabelSense sense) {
         float maxOcc = 0;
         for (int l = 0; l < sense.getSynset().getWordNetOffsets().size(); l++) {
-            Float occ = getSynsetOccurrences(sense.getSynset().getWordNetOffsets().get(l));
+            Float occ = getSynsetOccurrences(sense.getSynset().getWordNetOffsets().get(l).getID());
             if (occ != null && occ > maxOcc) {
                 maxOcc = occ;
             }
@@ -212,7 +212,7 @@ public class SenseFreqAPI {
     public float getMaxSenseProbability(String key, BabelSense sense, int maxSize) {
         float maxProb = 0;
         for (int l = 0; l < sense.getSynset().getWordNetOffsets().size(); l++) {
-            float prob = getSynsetProbability(key, sense.getSynset().getWordNetOffsets().get(l), maxSize);
+            float prob = getSynsetProbability(key, sense.getSynset().getWordNetOffsets().get(l).getID(), maxSize);
             if (prob > maxProb) {
                 maxProb = prob;
             }

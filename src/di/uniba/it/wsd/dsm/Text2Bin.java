@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexOutput;
 
 /**
@@ -65,7 +66,7 @@ public class Text2Bin {
             BufferedReader in = new BufferedReader(new FileReader(args[0]));
             File file = new File(args[1]);
             FSDirectory fs = FSDirectory.open(file.getParentFile());
-            IndexOutput output = fs.createOutput(file.getName());
+            IndexOutput output = fs.createOutput(file.getName(), IOContext.DEFAULT);
             String header = in.readLine();
             output.writeString("-dimensions");
             output.writeInt(Integer.parseInt(header));

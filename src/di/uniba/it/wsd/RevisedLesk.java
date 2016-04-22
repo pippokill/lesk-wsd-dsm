@@ -43,12 +43,14 @@ import di.uniba.it.wsd.dsm.ObjectVector;
 import di.uniba.it.wsd.dsm.VectorStore;
 import di.uniba.it.wsd.dsm.VectorUtils;
 import edu.mit.jwi.item.IPointer;
-import edu.mit.jwi.item.POS;
-import it.uniroma1.lcl.babelnet.BabelGloss;
+import it.uniroma1.lcl.babelnet.data.BabelGloss;
 import it.uniroma1.lcl.babelnet.BabelNet;
 import it.uniroma1.lcl.babelnet.BabelSense;
-import it.uniroma1.lcl.babelnet.BabelSenseSource;
+import it.uniroma1.lcl.babelnet.data.BabelSenseSource;
 import it.uniroma1.lcl.babelnet.BabelSynset;
+import it.uniroma1.lcl.babelnet.BabelSynsetIDRelation;
+import it.uniroma1.lcl.babelnet.data.BabelPOS;
+import it.uniroma1.lcl.babelnet.data.BabelPointer;
 import it.uniroma1.lcl.jlt.util.Language;
 import java.io.IOException;
 import java.io.StringReader;
@@ -67,7 +69,7 @@ import org.apache.commons.math.stat.StatUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.analysis.tokenattributes.TermAttribute;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.util.Version;
 import org.tartarus.snowball.SnowballStemmer;
 import org.tartarus.snowball.ext.frenchStemmer;
@@ -332,7 +334,7 @@ public class RevisedLesk {
      */
     public Map<String, Float> buildBag(String text) throws IOException {
         Map<String, Float> bag = new HashMap<>();
-        Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_CURRENT);
+        Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_4_9);
         SnowballStemmer stemmer = null;
         if (stemming) {
             stemmer = getStemmer(language);
@@ -341,9 +343,10 @@ public class RevisedLesk {
             }
         }
         TokenStream tokenStream = analyzer.tokenStream("gloss", new StringReader(text));
+        tokenStream.reset();
+        CharTermAttribute cattr = tokenStream.addAttribute(CharTermAttribute.class);
         while (tokenStream.incrementToken()) {
-            TermAttribute token = (TermAttribute) tokenStream.getAttribute(TermAttribute.class);
-            String term = token.term();
+            String term = cattr.toString();
             if (stemmer != null) {
                 stemmer.setCurrent(term);
                 if (stemmer.stem()) {
@@ -391,17 +394,27 @@ public class RevisedLesk {
             RelatedSynset get = map.get(synset);
             if (!get.isVisited()) {
                 get.setVisited(true);
-                Map<IPointer, List<BabelSynset>> relatedMap = synset.getRelatedMap();
+                /*Map<IPointer, List<BabelSynset>> relatedMap = synset.getRelatedMap();
                 Iterator<IPointer> itRel = relatedMap.keySet().iterator();
                 while (itRel.hasNext()) {
-                    IPointer pointer = itRel.next();
-                    if (!pointer.getName().equalsIgnoreCase("antonym")) {
-                        List<BabelSynset> list = relatedMap.get(pointer);
-                        for (BabelSynset relSynset : list) {
-                            RelatedSynset rs = map.get(relSynset);
-                            if (rs == null) {
-                                map.put(relSynset, new RelatedSynset(relSynset, distance));
-                            }
+                IPointer pointer = itRel.next();
+                if (!pointer.getName().equalsIgnoreCase("antonym")) {
+                List<BabelSynset> list = relatedMap.get(pointer);
+                for (BabelSynset relSynset : list) {
+                RelatedSynset rs = map.get(relSynset);
+                if (rs == null) {
+                map.put(relSynset, new RelatedSynset(relSynset, distance));
+                }
+                }
+                }
+                }*/
+                List<BabelSynsetIDRelation> edges = synset.getEdges();
+                for (BabelSynsetIDRelation relation : edges) {
+                    if (!relation.getPointer().equals(BabelPointer.ANTONYM)) {
+                        BabelSynset relSynset = relation.getBabelSynsetIDTarget().toBabelSynset();
+                        RelatedSynset rs = map.get(relSynset);
+                        if (rs == null) {
+                            map.put(relSynset, new RelatedSynset(relSynset, distance));
                         }
                     }
                 }
@@ -544,7 +557,7 @@ public class RevisedLesk {
         }
     }
 
-    private List<BabelSense> lookupSense(Language language, String lemma, POS postag) throws IOException {
+    private List<BabelSense> lookupSense(Language language, String lemma, BabelPOS postag) throws IOException {
         List<BabelSense> senses = babelNet.getSenses(language, lemma, postag, BabelSenseSource.WN);
         if (senses == null || senses.isEmpty()) {
             senses = babelNet.getSenses(language, lemma.replace(" ", "_"), postag, BabelSenseSource.WN);
@@ -576,7 +589,7 @@ public class RevisedLesk {
         if (senses != null && !senses.isEmpty()) {
             Set<String> ids = new HashSet<>();
             for (int i = senses.size() - 1; i >= 0; i--) {
-                if (!ids.add(senses.get(i).getSynset().getId())) {
+                if (!ids.add(senses.get(i).getSynset().getId().getID())) {
                     senses.remove(i);
                 }
             }
@@ -614,13 +627,13 @@ public class RevisedLesk {
                 if (token.getPos() != POSenum.OTHER) {
                     List<BabelSense> senses = null;
                     if (token.getPos() == POSenum.NOUN) {
-                        senses = lookupSense(language, token.getLemma(), POS.NOUN);
+                        senses = lookupSense(language, token.getLemma(), BabelPOS.NOUN);
                     } else if (token.getPos() == POSenum.VERB) {
-                        senses = lookupSense(language, token.getLemma(), POS.VERB);
+                        senses = lookupSense(language, token.getLemma(), BabelPOS.VERB);
                     } else if (token.getPos() == POSenum.ADJ) {
-                        senses = lookupSense(language, token.getLemma(), POS.ADJECTIVE);
+                        senses = lookupSense(language, token.getLemma(), BabelPOS.ADJECTIVE);
                     } else if (token.getPos() == POSenum.ADV) {
-                        senses = lookupSense(language, token.getLemma(), POS.ADVERB);
+                        senses = lookupSense(language, token.getLemma(), BabelPOS.ADVERB);
                     }
                     if (senses != null) {
                         float[] as = null;
@@ -640,47 +653,41 @@ public class RevisedLesk {
                                             String lemmakey = token.getLemma() + "#" + convertPosEnum(token.getPos());
                                             float freq = senseFreq.getSynsetProbability(lemmakey, senses.get(j).getWordNetOffset(), senses.size());
                                             sim = weightWsd * sim + weightSd * freq;
+                                        } else if (wikiType == WIKI_LEV) {
+                                            sim = weightWsd * sim + weightSd * computeLDscore(token.getToken(), senses.get(j).getLemma());
                                         } else {
-                                            if (wikiType == WIKI_LEV) {
-                                                sim = weightWsd * sim + weightSd * computeLDscore(token.getToken(), senses.get(j).getLemma());
-                                            } else {
-                                                sim = weightWsd * sim + weightSd * (1 / (double) senses.size());
-                                            }
+                                            sim = weightWsd * sim + weightSd * (1 / (double) senses.size());
                                         }
                                     } else { //Translate WordNet synset from other language
-                                        String mainSense = senses.get(j).getSynset().getMainSense();
+                                        String mainSense = senses.get(j).getSynset().getMainSense(Language.EN).getSynsetID().getID();
                                         if (mainSense != null && !mainSense.startsWith("WIKI:") && mainSense.length() > 0) {
                                             String lemmakey = token.getLemma() + "#" + convertPosEnum(token.getPos());
                                             float maxFreq = senseFreq.getMaxSenseProbability(lemmakey, senses.get(j), senses.size());
                                             sim = weightWsd * sim + weightSd * maxFreq;
+                                        } else if (wikiType == WIKI_LEV) {
+                                            sim = weightWsd * sim + weightSd * computeLDscore(token.getToken(), senses.get(j).getLemma());
                                         } else {
-                                            if (wikiType == WIKI_LEV) {
-                                                sim = weightWsd * sim + weightSd * computeLDscore(token.getToken(), senses.get(j).getLemma());
-                                            } else {
-                                                sim = weightWsd * sim + weightSd * (1 / (double) senses.size());
-                                            }
+                                            sim = weightWsd * sim + weightSd * (1 / (double) senses.size());
                                         }
                                     }
                                 } else if (sdType == SD_PROB_CROSS) { //Use english sense distribution for other langauge
-                                    String mainSense = senses.get(j).getSynset().getMainSense();
+                                    String mainSense = senses.get(j).getSynset().getMainSense(Language.EN).getSynsetID().getID();
                                     if (mainSense != null && !mainSense.startsWith("WIKI:") && mainSense.length() > 0) {
                                         int si = mainSense.lastIndexOf("#");
                                         String lemmakey = mainSense.substring(0, si);
                                         float maxFreq = senseFreq.getMaxSenseProbability(lemmakey, senses.get(j), senses.size());
                                         sim = weightWsd * sim + weightSd * maxFreq;
+                                    } else if (wikiType == WIKI_LEV) {
+                                        sim = weightWsd * sim + weightSd * computeLDscore(token.getToken(), senses.get(j).getLemma());
                                     } else {
-                                        if (wikiType == WIKI_LEV) {
-                                            sim = weightWsd * sim + weightSd * computeLDscore(token.getToken(), senses.get(j).getLemma());
-                                        } else {
-                                            sim = weightWsd * sim + weightSd * (1 / (double) senses.size());
-                                        }
+                                        sim = weightWsd * sim + weightSd * (1 / (double) senses.size());
                                     }
                                 } else if (sdType == SD_OCC) { //language independent based on synset offset
                                     sim = weightWsd * sim + weightSd * as[j];
                                 }
                             }
                             if (outType == OUT_BABELNET) {
-                                token.getSynsetList().add(new SynsetOut(senses.get(j).getSynset().getId(), sim));
+                                token.getSynsetList().add(new SynsetOut(senses.get(j).getSynset().getId().getID(), sim));
                             } else if (outType == OUT_WORDNET) {
                                 token.getSynsetList().add(new SynsetOut(senses.get(j).getSensekey(), sim));
                             } else {

@@ -47,6 +47,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 
 /**
@@ -66,7 +67,7 @@ public class LuceneVectorStore implements VectorStore {
      */
     public void init(File file) throws IOException {
         FSDirectory dir = FSDirectory.open(file.getParentFile());
-        this.indexInput = dir.openInput(file.getName());
+        this.indexInput = dir.openInput(file.getName(), IOContext.DEFAULT);
         String header = indexInput.readString(); //skip header
         if ((header.equalsIgnoreCase("-dimensions"))) {
             ObjectVector.vecLength = indexInput.readInt();
