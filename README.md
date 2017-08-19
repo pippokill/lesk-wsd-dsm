@@ -41,7 +41,7 @@ The script requires the following parameters:
 
 -f *xml|oldxml|plain*: indicates the input file format. The available values are: "xml" for the SemEval-2013 Task 12 file format (http://www.cs.york.ac.uk/semeval-2013/task12/), "oldxml" old SemEval XML format, "plain" for plain text. The plain text must contain one token for each line. Each line must contains three values separated by TAB: token, pos-tag, lemma. The pos-tag has four possible values: n (noun), v (verb), j (adjective), r (adverb), any other character for other tags. An example is reported in the *text* folder
 
--dsm *file_path*: the binary file which describes the distributional semantic model (DSM). The model for the English language is available here https://www.dropbox.com/s/xyqxg1p80wputhb/termvectors_en.bin?dl=0, while the model for the Italian language https://www.dropbox.com/s/h75t4r0mtr2deaj/termvectors_it.bin?dl=0 (Italian language model is in Java format).
+-dsm *file_path*: the binary file which describes the distributional semantic model (DSM). The model for the English language is available here https://www.dropbox.com/s/e32sqrbz51zfz4x/termvectors_en.bin?dl=0 while the model for the Italian language https://www.dropbox.com/s/5x26k6vx51d599e/termvectors_it.java.bin?dl=0 (Italian language model is in Java format).
 
 -dsmType *java|lucene*: set the DSM binary file format, java for DataOutputStream created by Java classes or Lucene format (luecene is the default value)
 
